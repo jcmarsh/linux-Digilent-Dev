@@ -235,12 +235,13 @@ static inline void unlock_anon_vma_root(struct anon_vma *root)
 
 /*
  * Attach the anon_vmas from src to dst.
- * Returns 0 on success, -ENOMEM on failure.
+ * Returns length of the anon_vma chain on success, -ENOMEM on failure.
  */
 int anon_vma_clone(struct vm_area_struct *dst, struct vm_area_struct *src)
 {
 	struct anon_vma_chain *avc, *pavc;
 	struct anon_vma *root = NULL;
+	int length = 0;
 
 	list_for_each_entry_reverse(pavc, &src->anon_vma_chain, same_vma) {
 		struct anon_vma *anon_vma;
@@ -256,9 +257,10 @@ int anon_vma_clone(struct vm_area_struct *dst, struct vm_area_struct *src)
 		anon_vma = pavc->anon_vma;
 		root = lock_anon_vma_root(root, anon_vma);
 		anon_vma_chain_link(dst, avc, anon_vma);
+		length++;
 	}
 	unlock_anon_vma_root(root);
-	return 0;
+	return length;
 
  enomem_failure:
 	unlink_anon_vmas(dst);
@@ -274,7 +276,7 @@ int anon_vma_fork(struct vm_area_struct *vma, struct vm_area_struct *pvma)
 {
 	struct anon_vma_chain *avc;
 	struct anon_vma *anon_vma;
-	int error;
+	int length;
 
 	/* Don't bother if the parent process has no anon_vma here. */
 	if (!pvma->anon_vma)
@@ -284,9 +286,11 @@ int anon_vma_fork(struct vm_area_struct *vma, struct vm_area_struct *pvma)
 	 * First, attach the new VMA to the parent VMA's anon_vmas,
 	 * so rmap can find non-COWed pages in child processes.
 	 */
-	error = anon_vma_clone(vma, pvma);
-	if (error)
-		return error;
+	length = anon_vma_clone(vma, pvma);
+	if (length < 0)
+		return -ENOMEM;
+	else if (length > 5)
+		return 0;
 
 	/* Then add our own anon_vma. */
 	anon_vma = anon_vma_alloc();

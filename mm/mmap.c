@@ -779,7 +779,7 @@ again:			remove_next = 1 + (end > next->vm_end);
 			int error;
 
 			error = anon_vma_clone(importer, exporter);
-			if (error)
+			if (error < 0)
 				return error;
 			importer->anon_vma = exporter->anon_vma;
 		}
@@ -2476,7 +2476,7 @@ static int __split_vma(struct mm_struct *mm, struct vm_area_struct *vma,
 		goto out_free_vma;
 
 	err = anon_vma_clone(new, vma);
-	if (err)
+	if (err < 0)
 		goto out_free_mpol;
 
 	if (new->vm_file)
@@ -2886,7 +2886,7 @@ struct vm_area_struct *copy_vma(struct vm_area_struct **vmap,
 			if (vma_dup_policy(vma, new_vma))
 				goto out_free_vma;
 			INIT_LIST_HEAD(&new_vma->anon_vma_chain);
-			if (anon_vma_clone(new_vma, vma))
+			if (anon_vma_clone(new_vma, vma) < 0)
 				goto out_free_mempol;
 			if (new_vma->vm_file)
 				get_file(new_vma->vm_file);
