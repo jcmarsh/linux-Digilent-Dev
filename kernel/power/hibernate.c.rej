@@ -1,0 +1,26 @@
+--- kernel/power/hibernate.c
++++ kernel/power/hibernate.c
+@@ -318,6 +320,7 @@ static int create_image(int platform_mode)
+ 	syscore_resume();
+ 
+  Enable_irqs:
++	system_state = SYSTEM_RUNNING;
+ 	local_irq_enable();
+ 
+  Enable_cpus:
+@@ -475,6 +479,7 @@ static int resume_target_kernel(bool platform_mode)
+ 	syscore_resume();
+ 
+  Enable_irqs:
++	system_state = SYSTEM_RUNNING;
+ 	local_irq_enable();
+ 
+  Enable_cpus:
+@@ -573,6 +579,7 @@ int hibernation_platform_enter(void)
+ 
+  Power_up:
+ 	syscore_resume();
++	system_state = SYSTEM_RUNNING;
+ 	local_irq_enable();
+ 	enable_nonboot_cpus();
+ 
